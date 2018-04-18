@@ -97,10 +97,26 @@ copy paste in js9 shell
 
 ## an example to run sandboxing on the local machine
 
+First you need to make sure that you have the zero-hub client installed locally
+```python
+pip install -e 'git+https://github.com/zero-os/0-hub#egg=zerohub&subdirectory=client'
+```
+
+Then you need to make sure that the zero-hub client is configured correclty
+```python
+iyo_client = j.clients.itsyouonline.get('main')
+zhub_data = {'token_': iyo_client.jwt, 'username': <iyo_username>,'url': 'https://hub.gig.tech/api'}
+zhub_client = j.clients.zerohub.get(data=zhub_data)
+zhub_client.config.save()
+```
+
 This will run the sandboxing of js9 on the local machine without the need of a remote machine.
 To run the script please run the following command after cloning the sandbox repo:
 ```python
 python3 /opt/code/github/jumpscale/sandbox/sandbox_js9_local.py
 ```
 
-This will will create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
+The script will do the following:
+- create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
+- merge the uploaded flist with a base ubuntu 16.04 flist (dockers/ubuntu-16.04.flist)
+- upload the merged flist as <username>/js9_sandbox_full.flist

@@ -1,4 +1,5 @@
 from js9 import j
+import json
 
 j.logger.loggers_level_set(20)
 iyo_client = j.clients.itsyouonline.get()
@@ -69,7 +70,18 @@ def build(prefab):
 
 
 def upload(prefab):
+    """
+    Uploaded the generated flist, merge it with a base ubuntu image and upload the new full flist
+    """
     prefab.core.execute_bash('''curl -b 'caddyoauth=%s' -F file=@/opt/var/build/sandbox/js9_sandbox.tar.gz https://hub.gig.tech/api/flist/me/upload''' % (iyo_client.jwt))
+    # zhub_data = {'token_': iyo_client.jwt, 'username': 'abdelrahman_hussein_1','url': 'https://hub.gig.tech/api'}
+    # zhub_client = j.clients.zerohub.get(data=zhub_data)
+    zhub_client = j.clients.zerohub.get()
+    zhub_client.authentificate()
+    sources = ['dockers/ubuntu-16.04.flist', '{}/js9_sandbox.flist'.format(zhub_client.config.data['username'])]
+    target = 'js9_sandbox_full.flist'
+    url = '{}/flist/me/merge/{}'.format(zhub_client.api.base_url, target)
+    resp = zhub_client.api.post(uri=url, data=json.dumps(sources), headers=None, params=None, content_type='application/json')
 
 
 def start(prefab):
