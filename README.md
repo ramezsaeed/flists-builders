@@ -38,7 +38,7 @@ it will print errors if any issues
 js9_config configure -l j.clients.openvcloud -i test
 ```
 
-- '-i' is the instance 
+- '-i' is the instance
 
 ## how to get your jwt token?
 
@@ -76,13 +76,13 @@ configuration items for j.clients.openvcloud
         address = 'be-gen-1.demo.greenitglobe.com'
 
         jwt_ = '...'
-        
+
         location = 'be-gen-1'
 
         port = 443
 
         space = 'test'
-    
+
 ```
 
 ## an example script to create a node on OVC
@@ -95,4 +95,12 @@ sp=cl.space_get()
 
 copy paste in js9 shell
 
+## an example to run sandboxing on the local machine
 
+This will run the sandboxing of js9 on the local machine without the need of a remote machine.
+To run the script please run the following command after cloning the sandbox repo:
+```python
+python3 /opt/code/github/jumpscale/sandbox/sandbox_js9_local.py
+```
+
+This will will create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
