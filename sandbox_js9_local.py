@@ -78,7 +78,7 @@ def upload(prefab):
     # zhub_client = j.clients.zerohub.get(data=zhub_data)
     zhub_client = j.clients.zerohub.get()
     zhub_client.authentificate()
-    sources = ['dockers/ubuntu-16.04.flist', '{}/js9_sandbox.flist'.format(zhub_client.config.data['username'])]
+    sources = ['gig-official-apps/ubuntu1604.flist', '{}/js9_sandbox.flist'.format(zhub_client.config.data['username'])]
     target = 'js9_sandbox_full.flist'
     url = '{}/flist/me/merge/{}'.format(zhub_client.api.base_url, target)
     resp = zhub_client.api.post(uri=url, data=json.dumps(sources), headers=None, params=None, content_type='application/json')
