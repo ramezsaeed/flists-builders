@@ -118,5 +118,5 @@ python3 /opt/code/github/jumpscale/sandbox/sandbox_js9_local.py
 
 The script will do the following:
 - create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
-- merge the uploaded flist with a base ubuntu 16.04 flist (dockers/ubuntu-16.04.flist)
+- merge the uploaded flist with a base ubuntu 16.04 flist (gig-bootable/ubuntu-xenial-bootable-sshd.flist)
 - upload the merged flist as <username>/js9_sandbox_full.flist
