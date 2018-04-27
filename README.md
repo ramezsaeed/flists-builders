@@ -95,7 +95,7 @@ sp=cl.space_get()
 
 copy paste in js9 shell
 
-## an example to run sandboxing on the local machine
+## An example to run sandboxing on the local machine
 
 First you need to make sure that you have the zero-hub client installed locally
 ```python
@@ -120,3 +120,36 @@ The script will do the following:
 - create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
 - merge the uploaded flist with a base ubuntu 16.04 flist (gig-official-apps/ubuntu1604-for-js.flist)
 - upload the merged flist as <username>/js9_sandbox_full.flist
+
+### Testing the sandbox
+To test the uploaded flist you can use the zbundle tool from https://github.com/zero-os/0-bundle 
+After creating the sandbox, a flist for js9 will be uploaded to your account on your account at https://hub.gig.tech
+
+#### Installing Zbundle
+To install the zbundle tool you need to execute the following steps:
+```bash
+mkdir -p /opt/bin
+wget -O /opt/bin/zbundle https://download.gig.tech/zbundle
+cd /opt/bin
+chmod +x zbundle
+```
+
+#### Testing the sandbox via zbundle
+Then you can start your sandbox using the following command
+```bash
+cd /opt/bin
+zbundle -id js9sandbox --entry-point /bin/bash --no-exit https://hub.gig.tech/abdelrahman_hussein_1/js9_sandbox_full.flist
+```
+You should change abdelrahman_hussein_1 from the above command with your own IYO username.
+Once started you can use chroot to use the sandboxed environment
+```bash
+chroot /tmp/zbundle/js9sandbox
+```
+Once you are already chrooted, then you can start a js9 shell session using the following command
+```bash
+source /env.sh; js9
+```
+You can also run the capacity reporting tool using the following command
+```bash
+echo "nameserver 8.8.8.8" > /etc/resolv.conf; source env.sh ; js9 'print(j.sal.ubuntu.capacity.report())'
+```
