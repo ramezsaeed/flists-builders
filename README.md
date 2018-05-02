@@ -141,15 +141,20 @@ cd /opt/bin
 zbundle -id js9sandbox --entry-point /bin/bash --no-exit https://hub.gig.tech/abdelrahman_hussein_1/js9_sandbox_full.flist
 ```
 You should change abdelrahman_hussein_1 from the above command with your own IYO username.
-Once started you can use chroot to use the sandboxed environment
+After running the above command you should see something similar to this:
 ```bash
-chroot /tmp/zbundle/js9sandbox
+07:58:49.147 zbundle ▶ INFO 001 flist exited, waiting for unmount (--no-exit was set)
+07:58:49.147 zbundle ▶ INFO 002 the sandbox is mounted under: /tmp/zbundle/js9sandbox
+07:58:49.147 zbundle ▶ INFO 003 Ctrl+C to terminate the sandbox
 ```
-Once you are already chrooted, then you can start a js9 shell session using the following command
+Once you are already started, then you can start a js9 shell session using the following command
 ```bash
-source /env.sh; js9
+cd /tmp/zbundle/js9sandbox
+source env.sh; js9
 ```
+Note that the /tmp/zbundle/js9sandbox should be the same as the mount point showed in the output of the zbundle command
 You can also run the capacity reporting tool using the following command
 ```bash
+cd /tmp/zbundle/js9sandbox
 echo "nameserver 8.8.8.8" > /etc/resolv.conf; source env.sh ; js9 'print(j.sal.ubuntu.capacity.report())'
 ```
