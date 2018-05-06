@@ -119,10 +119,11 @@ python3 /opt/code/github/jumpscale/sandbox/sandbox_js9_local.py
 The script will do the following:
 - create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
 - merge the uploaded flist with a base ubuntu 16.04 flist (gig-official-apps/ubuntu1604-for-js.flist)
+- merge the uploaded flist with a capacity checker flist (https://hub.gig.tech/abdelrahman_hussein_1/capacity_checker_js9.flist)
 - upload the merged flist as <username>/js9_sandbox_full.flist
 
 ### Testing the sandbox
-To test the uploaded flist you can use the zbundle tool from https://github.com/zero-os/0-bundle 
+To test the uploaded flist you can use the zbundle tool from https://github.com/zero-os/0-bundle
 After creating the sandbox, a flist for js9 will be uploaded to your account on your account at https://hub.gig.tech
 
 #### Installing Zbundle
@@ -156,5 +157,5 @@ Note that the /tmp/zbundle/js9sandbox should be the same as the mount point show
 You can also run the capacity reporting tool using the following command
 ```bash
 cd /tmp/zbundle/js9sandbox
-echo "nameserver 8.8.8.8" > /etc/resolv.conf; source env.sh ; js9 'print(j.sal.ubuntu.capacity.report())'
+source env.sh ; js9 'print(j.sal.ubuntu.capacity.report())'
 ```
