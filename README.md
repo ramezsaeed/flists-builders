@@ -119,7 +119,7 @@ python3 /opt/code/github/jumpscale/sandbox/sandbox_js9_local.py
 The script will do the following:
 - create the js9 sandbox flist and upload it to the current user's (configured via IYO) account at https://hub.gig.tech/
 - merge the uploaded flist with a base ubuntu 16.04 flist (gig-official-apps/ubuntu1604-for-js.flist)
-- merge the uploaded flist with a capacity checker flist (https://hub.gig.tech/abdelrahman_hussein_1/capacity_checker_js9.flist)
+- merge the uploaded flist with a capacity checker flist (https://hub.gig.tech/gig-official-apps/capacity_checker.flist)
 - upload the merged flist as <username>/js9_sandbox_full.flist
 
 ### Testing the sandbox
@@ -139,7 +139,7 @@ chmod +x zbundle
 Then you can start your sandbox using the following command
 ```bash
 cd /opt/bin
-zbundle -id js9sandbox --entry-point /bin/bash --no-exit https://hub.gig.tech/abdelrahman_hussein_1/js9_sandbox_full.flist
+zbundle -id js9sandbox --entry-point /bin/bash --no-exit https://hub.gig.tech/gig-official-apps/js9.3.0.a_sandbox_full.flist
 ```
 You should change abdelrahman_hussein_1 from the above command with your own IYO username.
 After running the above command you should see something similar to this:
