@@ -47,13 +47,14 @@ if __name__ == "__main__":
     bitcoinbins=["/opt/bin/bitcoind", "/opt/bin/bitcoin-cli", "/opt/bin/bitcoin-tx"]
     tfchainbins = ["/opt/bin/tfchaind", "/opt/bin/tfchainc"]
     ethbins = ["/opt/bin/geth"]
-
+    atomicswapbins = ["/opt/bin/btcatomicswap"]
 
     btcflist = do_pkgsandbox_and_push(prefab.blockchain.bitcoin, flistname="bitcoinflist", bins=bitcoinbins)
     tfchainflist = do_pkgsandbox_and_push(prefab.blockchain.tfchain, flistname="tfchainflist", bins=tfchainbins)
     ethereumflist = do_pkgsandbox_and_push(prefab.blockchain.ethereum, flistname="ethereumflist", bins=ethbins)
+    atomicswapflist = do_pkgsandbox_and_push(prefab.blockchain.atomicswap, flistname="atomicswapflist", bins=atomicswapbins)
+    cryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist]
 
-    cryptosources = [btcflist, tfchainflist, ethereumflist]
     cryptosandboxtarget = 'cryptosandbox.flist'
     
     zhub_data = {'token_': iyo_client.jwt, 'username': 'thabet','url': 'https://hub.gig.tech/api'}
@@ -63,7 +64,8 @@ if __name__ == "__main__":
 
     cryptoflist= merge(zhub_client, cryptosandboxtarget, cryptosources)
     ubuntucryptotarget = "ubuntucrypto.flist"
-    ubuntucryptosources = [btcflist, tfchainflist, ethereumflist, "azmy/ubuntu-xenial-bootable-sshd.flist"]
+    # can't use cryptoflist as source here because 
+    ubuntucryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist, "azmy/ubuntu-xenial-bootable-sshd.flist"]
 
     ubuntucryptoflist = merge(zhub_client, ubuntucryptotarget, ubuntucryptosources)
 
