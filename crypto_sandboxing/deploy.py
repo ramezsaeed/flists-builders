@@ -3,6 +3,9 @@ import threading
 import re
 from pssh.exceptions import ConnectionErrorException
 import requests
+import time
+import os
+import json
 
 
 """
@@ -28,9 +31,6 @@ Refund transaction (bda4c504b8ce4df6ac50e4914d16421c50ba4defb916e1142b5bcad25efe
 0200000001d82f1c4a209385a503dfe519ac050f14f98983e62406bb6e5203fc2c4d957da301000000cf483045022100c367297bef6e53b5de7522c396979eac70e7d9eb62adf727083cf3ef777192c402201f799215dd284f2d3d3a6fd10453b83b28ac01e43e6e5a1ef5ef39b97b35c0cf0121028d69b6cdc4c6ed23170c0918388a6c9b27811372db9954d898affbcd40ede697004c616382012088a82029bc7db3f1809b2bbd2091e5225d7dc2660826a78b8b734b8783cf2ae3830db88876a914d71c92b78069af7047d0a6c367be634aeb5ad6ac6704ab0d045bb17576a91499c51785eb8ed83a06e495aee769f687616cdd4f6888ac000000000127d31200000000001976a914063f138942d2b2af935c678c2a99ae9470d8908e88acab0d045b
 
 Published contract transaction (a37d954d2cfc03526ebb0624e68389f9140f05ac19e5df03a58593204a1c2fd8)
-
-# parse the above output using
-re.search(r'Secret:\s*(?P<secret>\w+)\n*Secret\shash:\s*(?P<secret_hash>\w+)\n*.*\n*.*\n*Contract\s*\((?P<contract_addr>\w+)\):\n*(?P<contract>\w+)\n*Contract\s*transaction\s*\((?P<contract_txn_addr>\w+)\):\n*(?P<contract_txn>\w+)\n*Refund\s*transaction\s*\((?P<refund_txn_addr>\w+)\):\n*(?P<refund_txn>\w+)\n*.*\n*Published\s*contract\s*transaction\s*\((?P<publishd_contract_txn_address>\w+)\)', initiat_output).groups()
 
 # run on the btc node to decode the contract
 curl --user user:pass --data-binary '{"jsonrpc": "1.0", "id":"curltest", "method": "decodescript", "params": ["6382012088a82029bc7db3f1809b2bbd2091e5225d7dc2660826a78b8b734b8783cf2ae3830db88876a914d71c92b78069af7047d0a6c367be634aeb5ad6ac6704ab0d045bb17576a91499c51785eb8ed83a06e495aee769f687616cdd4f6888ac"] }' -H 'content-type: text/plain;' http://127.0.0.1:8332/
@@ -142,34 +142,55 @@ server=1
 """
 DEFAULT_BITCOIN_CONFIG_PATH = '{}/bitcoin.conf'.format(DEFAULT_BITCOIN_DIR)
 DEFAULT_BITCOIN_CONT_CONFIG_PATH = '{}/bitcoin.conf'.format(DEFAULT_BITCOIN_CONT_DIR)
+DEFAULT_TFT_WALLET_PASSPHRASE = 'pass'
 
-node_ip = '172.28.128.3'
 atomic_exchange_repo = 'https://github.com/JimberSoftware/AtomicExchange.git'
 bitcoind_config_path = '{}/cryptoDocker/bitcoin.conf'
 bitcoind_cmd = 'bitcoind -conf={} --daemon'
 tfchaind_data_dir = '/opt/var/data/tfchaind'
 tfchaind_cmd = 'cd {};/opt/go_proj/bin/tfchaind --network testnet -M gctwe &'.format(tfchaind_data_dir)
-bitcoinswap_bin_path = '{}/cryptoDocker/btcatomicswap'
-btc_address = 'mzs97UaaakaknGDX3eLqS9z87Z7fYMvjtW'
-btcswap_cmd = '{} --testnet --rpcuser=user --rpcpass=pass -s localhost:8332 initiate {} 0.01234'
+bitcoinswap_bin_path = '{}/cryptoDocker/btcatomicswap
 
+
+def init_tft_wallet(prefab, passphrase, recovery_seed=None):
+    """
+    Initialize tft wallet using the passphrase and recovery seed if provided
+    If the wallet is unlocked then nothing will happen
+    """
+
+    cmd = 'curl -A "Rivine-Agent" "localhost:23110/wallet"'
+    rc, out, err = prefab.core.run(cmd, die=False)
+    if rc:
+        raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
+    json_out = json.loads(out)
+    cmd_data = '--data "passphrase={}"
+    if json_out.get('unlocked') is False and json_out.get('encrypted') is False:
+        if recovery_seed:
+            entropy = entropy = j.data.encryption.mnemonic.to_entropy(recovery_seed)
+            cmd_data = '--data "passphrase={}&seed={}"'.format(passphrase, entropy.hex())
+        else:
+            cmd_data = '--data "passphrase={}"'.format(passphrase)
+        cmd = 'curl -A "Rivine-Agent" {} "localhost:23110/wallet/init"'.format(cmd_data)
+        rc, out, err = prefab.core.run(cmd, die=False)
+        if rc:
+            raise RuntimeError('Failed to initialize tft wallet. Error {}'.format(err))
+        
 
 def check_tfchain_synced(prefab):
     """
     Check if the tfchain daemon is synced with the offical testnet
-
     @param prefab: prefab of the TFT node
     """
-    testnet_explorer = 'https://explorer2.testnet.threefoldtoken.com/explorer'
+    testnet_explorer = 'https://explorer.testnet.threefoldtoken.com/explorer'
     res = requests.get(testnet_explorer)
     if res.status_code == 200:
         expected_height = res.json()['height']
-        _, out, err = prefab.core.run(cmd='/opt/bin/tfchainc')
+        _, out, err = prefab.core.run(cmd='tfchainc')
         out = '{}\n{}'.format(out, err)
-        match = re.search('^Synced:\s+(?P<synced>\w+)\n*Height:\s*(?P<height>\d+)', out)
+        match = re.search('^Synced:\s+(?P<synced>\w+)\n*.*\n*Height:\s*(?P<height>\d+)', out)
         if match:
             match_info = match.groupdict()
-            if match_info['synced'] == 'Yes' and match_info['height'] == expected_height:
+            if match_info['synced'] == 'Yes' and int(match_info['height']) == expected_height:
                 return True
     return False
 
@@ -179,8 +200,10 @@ def start_blockchains(prefab, node_name):
     """
     Start blockchains daemons on a node
     """
+    # a bit unrelated but make sure that curl is installed
+    prefab.core.run('apt-get update; apt-get install -y curl')
     print("Starting tfchaind daemon on {}".format(node_name))
-    tfchaind_cmd = '/opt/bin/tfchaind --network testnet -M gctwe'
+    tfchaind_cmd = 'tfchaind --network testnet -M gctwe'
     tfchaind_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(tfchaind_cmd)
     rc, _, _ = prefab.core.run(cmd=tfchaind_cmd_check, die=False)
     if rc:
@@ -191,7 +214,7 @@ def start_blockchains(prefab, node_name):
     prefab.core.dir_ensure(DEFAULT_BITCOIN_DIR)
     prefab.core.file_write(location=DEFAULT_BITCOIN_CONFIG_PATH,
                                     content=DEFAULT_BITCOIN_CONFIG)
-    btc_cmd = '/opt/bin/bitcoind -daemon'
+    btc_cmd = 'bitcoind -daemon'
     btc_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(btc_cmd)
     rc, _, _ = prefab.core.run(cmd=btc_cmd_check, die=False)
     if rc:
@@ -210,8 +233,8 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
     zrobot_cl = j.clients.zrobot.robots[zos_node_name]
     tft_node_data = {
     'name': 'tft_node',
-    'flist': 'https://hub.gig.tech/thabet/ubuntucrypto.flist',
-    'memory': 2048,
+    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucryptoexchange.flist',
+    'memory': 1024 * 14,
     'cpu': 2,
     'nics':[{'type': 'default', 'name': 'nic01'}],
     'ports':[{'name': 'ssh', 'source': 2250, 'target':22}],
@@ -219,11 +242,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
                  'name': 'sshauthorizedkeys'}],
     }
     print("Creating TFT node vm")
-    # import pdb; pdb.set_trace()
-    if tft_node_data['name'] in zrobot_cl.services.names:
-        tft_node_srv = zrobot_cl.services.names[tft_node_data['name']]
-    else:
-        tft_node_srv = zrobot_cl.services.create('github.com/zero-os/0-templates/vm/0.0.1', tft_node_data['name'], tft_node_data)
+    tft_node_srv = zrobot_cl.services.find_or_create('github.com/zero-os/0-templates/vm/0.0.1', tft_node_data['name'], tft_node_data)
     task = tft_node_srv.schedule_action('install')
     task.wait()
     if task.state != 'ok':
@@ -239,16 +258,19 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
             time.sleep(30)
             timeout -= 30
 
-    if tft_node_prefab:
+    if tft_node_prefab is None:
         raise RuntimeError("Failed to establish a connection to {} port: {}".format(zos_node_name, tft_node_data['ports'][0]['source']))
+
+    # add /opt/bin to the path
+    tft_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False)
 
     start_blockchains(tft_node_prefab, tft_node_data['name'])
 
 
     btc_node_data = {
     'name': 'btc_node',
-    'flist': 'https://hub.gig.tech/thabet/ubuntucrypto.flist',
-    'memory': 2048,
+    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucryptoexchange.flist',
+    'memory': 1024 * 14,
     'cpu': 2,
     'nics':[{'type': 'default', 'name': 'nic01'}],
     'ports':[{'name': 'ssh', 'source': 2350, 'target':22}],
@@ -256,10 +278,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
                  'name': 'sshauthorizedkeys'}],
     }
     print("Creating BTC node vm")
-    if btc_node_data['name'] in zrobot_cl.services.names:
-        btc_node_srv = zrobot_cl.services.names[btc_node_data['name']]
-    else:
-        btc_node_srv = zrobot_cl.services.create('github.com/zero-os/0-templates/vm/0.0.1', btc_node_data['name'], btc_node_data)
+    btc_node_srv = zrobot_cl.services.create('github.com/zero-os/0-templates/vm/0.0.1', btc_node_data['name'], btc_node_data)
     task = btc_node_srv.schedule_action('install')
     task.wait()
     if task.state != 'ok':
@@ -275,34 +294,14 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
             time.sleep(30)
             timeout -= 30
 
-    if not btc_node_prefab:
+    if btc_node_prefab is None:
         raise RuntimeError("Failed to establish a connection to {} port: {}".format(zos_node_name, btc_node_data['ports'][0]['source']))
+
+    # add /opt/bin to the path
+    btc_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False)
 
     start_blockchains(btc_node_prefab, btc_node_data['name'])
 
-
-
-
-
-    # sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
-    # sshkey = j.clients.sshkey.get(sshkeyname)
-    # uuid = zos_cl.kvm.create(name='tft_node', memory=2048, cpu=2, flist='https://hub.gig.tech/thabet/ubuntucrypto.flist',
-    #                     nics=[{'type': 'default'}], port={2250:22},
-    #                     config={'/root/.ssh/authorized_keys':sshkey.pubkey})
-
-
-    # zos_node = j.clients.zero_os.sal.get_node(zos_node_name)
-    # print("Creating new container for TFT")
-    # tft_ct = zos_node.containers.create('tft', flist='https://hub.gig.tech/thabet/ubuntucrypto.flist', nics=[{'type': 'default'}], ports={2250:22})
-    # print("Starting tftchaind")
-    # tft_ct.client.bash(script='/opt/bin/tfchaind --network testnet -M gctwe &')
-    #
-    # print("Creating new container for BTC")
-    # btc_ct = zos_node.containers.create('btc', flist='https://hub.gig.tech/thabet/ubuntucrypto.flist', nics=[{'type': 'default'}], ports={2251:22})
-    # btc_ct.client.filesystem.mkdir(DEFAULT_BITCOIN_CONT_DIR)
-    # btc_ct.upload_content(DEFAULT_BITCOIN_CONT_CONFIG_PATH, DEFAULT_BITCOIN_CONFIG)
-    # print("Starting bitcoind")
-    # btc_ct.client.bash(script='/opt/bin/bitcoind --daemon')
 
 
 
@@ -324,39 +323,14 @@ def create_packet_machines(sshkeyname=None):
     btc_node.prefab.core.dir_ensure(DEFAULT_BITCOIN_DIR)
     btc_node.prefab.core.file_write(location=DEFAULT_BITCOIN_CONFIG_PATH,
                                     content=DEFAULT_BITCOIN_CONFIG)
-    btc_cmd = 'bitcoind -daemon'
-    btc_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(btc_cmd)
-    rc, _, _ = btc_node.prefab.core.run(cmd=btc_cmd_check, die=False)
-    if rc:
-        btc_node.prefab.core.run(cmd=btc_cmd)
+
+    start_blockchains(prefab=btc_node.prefab, node_name='hussein.btc')
 
     print("Creating packet machine for TFTChain node")
     tft_node = packet_cl.startDevice(hostname='hussein.tft', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
     install_blockchains(prefab=tft_node.prefab)
 
-    # start tfchaind
-    print("Starting tfchaind")
-    tfchaind_cmd = 'tfchaind --network testnet -M gctwe'
-    tfchaind_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(tfchaind_cmd)
-    rc, _, _ = tft_node.prefab.core.run(cmd=tfchaind_cmd_check, die=False)
-    if rc:
-        ## workaround until figuring out to start tftchaind in the background
-        import os
-        start_tftchaind_script_path = j.sal.fs.joinPaths(os.path.dirname(__file__), 'start_tfchaind.py')
-        j.tools.prefab.local.core.run(cmd='python3 {} > /tmp/start_tfchaind.stdout 2>&1 &'.format(start_tftchaind_script_path))
-        # from multiprocessing import Process
-        # tfchaind_cmd_thread = Process(target=tft_node.prefab.core.run,
-        #                                         kwargs={
-        #                                         'cmd': tfchaind_cmd,
-        #                                         'profile': False,
-        #                                         },
-        #                                         daemon=False)
-        # tfchaind_cmd_thread.start()
-    # tft_node.prefab.core.run(cmd=tfchaind_cmd, profile=False)
-
-    # print("Creating packet machine for Ethereum node")
-    # eth_node = packet_cl.startDevice(hostname='hussein.eth', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
-    # install_blockchains(prefab=eth_node.prefab)
+    start_blockchains(prefab=tft_node.prefab, node_name='hussein.tft')
 
     return {
     'btc': btc_node.prefab,
@@ -372,15 +346,14 @@ def install_blockchains(prefab):
     """
     print("Installing blockchains")
     prefab.system.base.install(upgrade=True)
-    prefab.apps.tfchain.build()
-    prefab.apps.bitcoin.install()
-    prefab.apps.ethereum.install()
+    prefab.blockchain.tfchain.build()
+    prefab.blockchain.tfchain.install()
+    prefab.blockchain.bitcoin.build()
+    prefab.blockchain.bitcoin.install()
+    prefab.blockchain.atomicswap.build()
+    prefab.blockchain.atomicswap.install()
+    # prefab.blockchain.ethereum.install()
 
-    # pull the atomic exchange repo
-    print("Installing atomicswap binary")
-    path = prefab.tools.git.pullRepo(url=atomic_exchange_repo)
-    atomicswap_src_path = j.sal.fs.joinPaths(path, 'cryptoDocker', 'btcatomicswap')
-    prefab.core.file_copy(source=atomicswap_src_path, dest=prefab.core.dir_paths['BINDIR'])
 
 
 def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main'):
@@ -394,17 +367,36 @@ def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main'):
     zt_api_token = j.clients.zerotier.get(zt_client_instance).config.data['token_']
     packet_cl = j.clients.packetnet.get()
     sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
-    zos_packet_cl, packet_node, ipaddr  = packet_cl.startZeroOS(hostname='hussein.zos', zerotierId=zt_netid,
-                                                            zerotierAPI=zt_api_token, branch='master', params=['development'])
+    zos_packet_cl, packet_node, ipaddr  = packet_cl.startZeroOS(hostname='hussein.blockchain', zerotierId=zt_netid,
+                                                                plan='baremetal_1', zerotierAPI=zt_api_token,
+                                                                branch='master', params=['development'])
     zos_node_name = ipaddr
     zrobot_data = {
     'url': 'http://{}:6600'.format(zos_node_name)
     }
+    # the get call to create the client instance and then we get a more usefull robot instance
     zrobot_cl = j.clients.zrobot.get(zos_node_name, data=zrobot_data)
-    create_blockchain_zos_vms(zos_node_name=zos_node_name, sshkeyname=sshkeyname)
+    zrobot_cl = j.clients.zrobot.robots[zos_node_name]
+    # wait for 0-node reobot to be reachable services can be listed
+    timeout = 5 * 60
+    print("Waiting for 0-node robot to be ready")
+    while timeout > 0:
+        try:
+            zrobot_cl.services.names
+        except Exception:
+            timeout -= 30
+            time.sleep(timeout)
+        else:
+            break
 
-    # zrobot_cl = j.clients.zrobot.robots[zos_node_name]
+    if not timeout:
+        raise RuntimeError("Z-node robot is not accessible")
 
+    try:
+        create_blockchain_zos_vms(zos_node_name=zos_node_name, sshkeyname=sshkeyname)
+    except Exception:
+        import IPython
+        IPython.embed()
 
 
 def main():
@@ -414,14 +406,16 @@ def main():
     print("Preparing blockchains environments")
     if not j.clients.sshkey.sshagent_available():
         j.clients.sshkey.sshagent_start()
-
-    create_packet_zos(zt_netid='12ac4a1e717f72a1')
+    zt_netid_envvar = 'ZT_NET_ID'
+    zt_netid = os.environ.get(zt_netid_envvar)
+    if zt_netid is None:
+        raise RuntimeError('Environtment variable {} is not set'.format(zt_netid_envvar))
+    sshkeyname = os.environ.get('SSHKEY_NAME')
+    zt_client_instance = os.environ.get('ZT_CLIENT_INSTANCE', 'main')
+    create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname, zt_client_instance=zt_client_instance)
 
     # create btcswap command
     print("Initiating atomic swap operation")
-    # bitcoinswap_bin_path = bitcoinswap_bin_path.format(path)
-    # btcswap_cmd = btcswap_cmd.format(bitcoinswap_bin_path, btc_address)
-    # prefab.core.run(cmd=btcswap_cmd)
 
 
 if __name__ == '__main__':
