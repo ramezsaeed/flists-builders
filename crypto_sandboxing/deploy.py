@@ -163,7 +163,7 @@ def init_tft_wallet(prefab, passphrase, recovery_seed=None):
     if rc:
         raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
     json_out = json.loads(out)
-    cmd_data = '--data "passphrase={}"'1561
+    cmd_data = '--data "passphrase={}"'
     if json_out.get('unlocked') is False and json_out.get('encrypted') is False:
         if recovery_seed:
             entropy = entropy = j.data.encryption.mnemonic.to_entropy(recovery_seed)
@@ -356,7 +356,7 @@ def install_blockchains(prefab):
 
 
 
-def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main'):
+def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', packet_client_instance='main'):
     """
     Creates a zos node on packet.net
 
@@ -365,7 +365,7 @@ def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main'):
     @param zt_client_instance: Name of the zerotier client instance
     """
     zt_api_token = j.clients.zerotier.get(zt_client_instance).config.data['token_']
-    packet_cl = j.clients.packetnet.get()
+    packet_cl = j.clients.packetnet.get(packet_client_instance)
     sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
     zos_packet_cl, packet_node, ipaddr  = packet_cl.startZeroOS(hostname='hussein.blockchain', zerotierId=zt_netid,
                                                                 plan='baremetal_1', zerotierAPI=zt_api_token,
@@ -412,7 +412,11 @@ def main():
         raise RuntimeError('Environtment variable {} is not set'.format(zt_netid_envvar))
     sshkeyname = os.environ.get('SSHKEY_NAME')
     zt_client_instance = os.environ.get('ZT_CLIENT_INSTANCE', 'main')
-    create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname, zt_client_instance=zt_client_instance)
+    packet_client_instance = os.environ.get('PACKET_CLIENT_INSTANCE', 'main')
+    create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname,
+                      zt_client_instance=zt_client_instance,
+                      packet_client_instance=packet_client_instance
+                      )
 
     # create btcswap command
     print("Initiating atomic swap operation")
