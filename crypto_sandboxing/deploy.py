@@ -149,7 +149,7 @@ bitcoind_config_path = '{}/cryptoDocker/bitcoin.conf'
 bitcoind_cmd = 'bitcoind -conf={} --daemon'
 tfchaind_data_dir = '/opt/var/data/tfchaind'
 tfchaind_cmd = 'cd {};/opt/go_proj/bin/tfchaind --network testnet -M gctwe &'.format(tfchaind_data_dir)
-bitcoinswap_bin_path = '{}/cryptoDocker/btcatomicswap
+bitcoinswap_bin_path = '{}/cryptoDocker/btcatomicswap'
 
 
 def init_tft_wallet(prefab, passphrase, recovery_seed=None):
@@ -163,7 +163,7 @@ def init_tft_wallet(prefab, passphrase, recovery_seed=None):
     if rc:
         raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
     json_out = json.loads(out)
-    cmd_data = '--data "passphrase={}"
+    cmd_data = '--data "passphrase={}"'1561
     if json_out.get('unlocked') is False and json_out.get('encrypted') is False:
         if recovery_seed:
             entropy = entropy = j.data.encryption.mnemonic.to_entropy(recovery_seed)
@@ -174,7 +174,7 @@ def init_tft_wallet(prefab, passphrase, recovery_seed=None):
         rc, out, err = prefab.core.run(cmd, die=False)
         if rc:
             raise RuntimeError('Failed to initialize tft wallet. Error {}'.format(err))
-        
+
 
 def check_tfchain_synced(prefab):
     """
@@ -420,3 +420,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    import IPython
+    IPython.embed()
