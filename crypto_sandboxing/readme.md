@@ -15,14 +15,14 @@ The setup shows:
 - A js9 node where the atomicswap SAL can be executed
 
 ## How to setup your test environment
-We provide an end2end script that can be used to does a complete setup of the environment. The script needs to run from a JS9 node and it needs the following clients to be configured:
+We provide an end2end script that can be used to do a complete setup of the environment. The script needs to run from a JS9 node and it needs the following clients to be configured:
 - At least one sshkey client to be configured and loaded
 - At least one zerotier client to be configured
 - At least one packet client to be configured
 
 ### Environment Variables
-The setup depends on some variables that would be used to control how the setup will deployed and also configur the single VMs running the bockchains. The following environment variables can be set before running the deploy script to set the different values of the variables
-- ZT_NET_ID: [REQUIRED] This is the only required environment variables to be set, if it is not set then the script will fail since we will not know which zerotier netowrk to use when setting up the zero-os node. Make sure that your API token configured in the zerotier client have access to this network.
+The setup depends on some variables that would be used to control how the setup will be deployed and also configur the single VMs running the bockchains. The following environment variables can be set before running the deploy script to set the different values of the variables
+- ZT_NET_ID: [REQUIRED] This is the only required environment variables to be set, if it is not set then the script will fail since we will not know which zerotier netowrk to use when setting up the zero-os node. Make sure that your API token that is configured in the zerotier client have access to this network.
 - SSHKEY_NAME: [default: id_rsa] This will be the keyname of the sshkey to be used to authorized the current node to communicate with the remote nodes created during the deployment.
 - ZT_CLIENT_INSTANCE: [default: main] Name of the zerotier client instance to be used.
 - PACKET_CLIENT_INSTANCE: [default: main] Name of the packet.net client instance to be used.
