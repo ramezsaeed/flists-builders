@@ -46,3 +46,33 @@ The script will do the following steps:
 - On the TFT node, it will initialize the wallet using the provided passphrase and recovery seed or use the default values
 - Wait for the blockchains to sync with the respective networks.
 
+### Adding funds to the wallets
+By now you should have two full nodes, one BTC node and another TFT Node. To be able to make an atomicswap enough funds need to exist in both wallets.
+If you already configured the TFT_WALLET_RECOVERY_SEED and that seed already have funds then you dont need to do anything for the TFT Node. If you do not have funds on that seed or you did not provide recovery seed, then you need to transfer funds to your wallet.
+#### Adding funds to the TFT node wallet
+First you need to get an address from the TFT wallet, you can do that by executing the following commands on the js9 node that ran the deploy script
+```python
+tft_prefab = j.tools.prefab.getFromSSH(<zt_ip_address_of_zos_node>, port=2250)
+tft_prefab.core.run('tfchainc wallet address')[1]
+* RUN:tfchainc wallet address
+Out[8]: 'Created new address: 010b5b9c062731dad10f87f67722ea37e578c4808a14f6b251b4fc106f25ea6568031d8be296f4'
+```
+You then need to contact the rivine team to send you funds on this address.
+
+### Adding funds to the BTC node wallet
+First you need to get an address from the BTC wallet, you cn do that by executing the following commands on the js9 noce that ran the deploy script
+```python
+btc_prefab = j.tools.prefab.getFromSSH(<zt_ip_address_of_zos_node>, port=2350)
+ btc_prefab.core.run('bitcoin-cli getnewaddress ""')[1]
+* RUN:bitcoin-cli getnewaddress ""
+* EXECUTE localhost:2222: [ ! -e '/root/.bash_profile' ] && touch '/root/.bash_profile' ;source /root/.bash_profile;bitcoin-cli getnewaddress ""
+INFO:pssh.host_logger:[localhost]       2MwekrLGQFqpTTEWtmWzn3R25B7Ft8DBX9g
+* 2MwekrLGQFqpTTEWtmWzn3R25B7Ft8DBX9g
+Out[11]: '2MwekrLGQFqpTTEWtmWzn3R25B7Ft8DBX9g'
+```
+Then you can use the above address to transfer funds to it. You can do that by visiting the following website [https://testnet.manu.backend.hamburg/faucet]
+
+Once you have funds in both wallets then you can start using the atomicswap tool
+
+
+
