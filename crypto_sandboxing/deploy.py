@@ -159,13 +159,13 @@ def tft_wallet_unlock(prefab, passphrase):
     @param passphrase: Phasephrase to unlock the wallet
     """
     cmd = 'curl -A "Rivine-Agent" "localhost:23110/wallet"'
-    rc, out, err = prefab.core.run(cmd, die=False)
+    rc, out, err = prefab.core.run(cmd, die=False, showout=False)
     if rc:
         raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
     json_out = json.loads(out)
     if json_out.get('unlocked') is False and json_out.get('encrypted') is True:
         cmd = 'curl -A "Rivine-Agent" --data "passphrase={}" "localhost:23110/wallet/unlock"'.format(passphrase)
-        _, out, _ = prefab.core.run(cmd)
+        _, out, _ = prefab.core.run(cmd, showout=False)
         if out:
             stdout_error = json.loads(out).get('message')
             if stdout_error:
@@ -179,7 +179,7 @@ def tft_wallet_init(prefab, passphrase, recovery_seed=None):
     """
 
     cmd = 'curl -A "Rivine-Agent" "localhost:23110/wallet"'
-    rc, out, err = prefab.core.run(cmd, die=False)
+    rc, out, err = prefab.core.run(cmd, die=False, showout=False)
     if rc:
         raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
     json_out = json.loads(out)
@@ -191,7 +191,7 @@ def tft_wallet_init(prefab, passphrase, recovery_seed=None):
         else:
             cmd_data = '--data "passphrase={}"'.format(passphrase)
         cmd = 'curl -A "Rivine-Agent" {} "localhost:23110/wallet/init"'.format(cmd_data)
-        rc, out, err = prefab.core.run(cmd, die=False)
+        rc, out, err = prefab.core.run(cmd, die=False, showout=False)
         if rc:
             raise RuntimeError('Failed to initialize tft wallet. Error {}'.format(err))
 
@@ -206,7 +206,7 @@ def check_tfchain_synced(prefab, height_threeshold=10):
     res = requests.get(testnet_explorer)
     if res.status_code == 200:
         expected_height = res.json()['height']
-        _, out, err = prefab.core.run(cmd='tfchainc')
+        _, out, err = prefab.core.run(cmd='tfchainc', showout=False)
         out = '{}\n{}'.format(out, err)
         match = re.search('^Synced:\s+(?P<synced>\w+)\n*.*\n*Height:\s*(?P<height>\d+)', out)
         if match:
@@ -225,7 +225,7 @@ def check_btc_synced(prefab, height_threeshold=10):
     res = requests.get(testnet_url)
     if res.status_code == 200:
         expected_height = res.json()['height']
-        _, out, _ = prefab.core.run(cmd='bitcoin-cli -getinfo')
+        _, out, _ = prefab.core.run(cmd='bitcoin-cli -getinfo', showout=False)
         current_height = json.loads(out)['blocks']
         if expected_height - current_height <= height_threeshold:
             return True
@@ -237,13 +237,13 @@ def start_blockchains(prefab, node_name):
     Start blockchains daemons on a node
     """
     # a bit unrelated but make sure that curl is installed
-    prefab.core.run('apt-get update; apt-get install -y curl')
+    prefab.core.run('apt-get update; apt-get install -y curl', die=False, showout=False)
     print("Starting tfchaind daemon on {}".format(node_name))
     tfchaind_cmd = 'tfchaind --network testnet -M gctwe'
     tfchaind_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(tfchaind_cmd)
-    rc, _, _ = prefab.core.run(cmd=tfchaind_cmd_check, die=False)
+    rc, _, _ = prefab.core.run(cmd=tfchaind_cmd_check, die=False, showout=False)
     if rc:
-        prefab.core.run('{} >/dev/null 2>&1 &'.format(tfchaind_cmd))
+        prefab.core.run('{} >/dev/null 2>&1 &'.format(tfchaind_cmd), showout=False)
 
     # start bitcoind
     print("Starting btcoind daemon on {}".format(node_name))
@@ -252,9 +252,9 @@ def start_blockchains(prefab, node_name):
                                     content=DEFAULT_BITCOIN_CONFIG)
     btc_cmd = 'bitcoind -daemon'
     btc_cmd_check = 'ps fax | grep "{}" | grep -v grep'.format(btc_cmd)
-    rc, _, _ = prefab.core.run(cmd=btc_cmd_check, die=False)
+    rc, _, _ = prefab.core.run(cmd=btc_cmd_check, die=False, showout=False)
     if rc:
-        prefab.core.run(cmd=btc_cmd)
+        prefab.core.run(cmd=btc_cmd, showout=False)
 
 
 def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
@@ -298,7 +298,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
         raise RuntimeError("Failed to establish a connection to {} port: {}".format(zos_node_name, tft_node_data['ports'][0]['source']))
 
     # add /opt/bin to the path
-    tft_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False)
+    tft_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False, showout=False)
 
     start_blockchains(tft_node_prefab, tft_node_data['name'])
     print('Initializing TFT wallet')
@@ -342,7 +342,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
         raise RuntimeError("Failed to establish a connection to {} port: {}".format(zos_node_name, btc_node_data['ports'][0]['source']))
 
     # add /opt/bin to the path
-    btc_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False)
+    btc_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False, showout=False)
 
     start_blockchains(btc_node_prefab, btc_node_data['name'])
 
