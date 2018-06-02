@@ -152,7 +152,27 @@ tfchaind_cmd = 'cd {};/opt/go_proj/bin/tfchaind --network testnet -M gctwe &'.fo
 bitcoinswap_bin_path = '{}/cryptoDocker/btcatomicswap'
 
 
-def init_tft_wallet(prefab, passphrase, recovery_seed=None):
+def tft_wallet_unlock(prefab, passphrase):
+    """
+    Unlock a tft wallet
+
+    @param passphrase: Phasephrase to unlock the wallet
+    """
+    cmd = 'curl -A "Rivine-Agent" "localhost:23110/wallet"'
+    rc, out, err = prefab.core.run(cmd, die=False)
+    if rc:
+        raise RuntimeError('Failed to unlock tft wallet. Error {}'.format(err))
+    json_out = json.loads(out)
+    if json_out.get('unlocked') is False and json_out.get('encrypted') is True:
+        cmd = 'curl -A "Rivine-Agent" --data "passphrase={}" "localhost:23110/wallet/unlock"'.format(passphrase)
+        _, out, _ = prefab.core.run(cmd)
+        if out:
+            stdout_error = json.loads(out).get('message')
+            if stdout_error:
+                raise RuntimeError('Failed to unlock wallet. Error {}'.format(stdout_error))
+
+
+def tft_wallet_init(prefab, passphrase, recovery_seed=None):
     """
     Initialize tft wallet using the passphrase and recovery seed if provided
     If the wallet is unlocked then nothing will happen
@@ -176,10 +196,11 @@ def init_tft_wallet(prefab, passphrase, recovery_seed=None):
             raise RuntimeError('Failed to initialize tft wallet. Error {}'.format(err))
 
 
-def check_tfchain_synced(prefab):
+def check_tfchain_synced(prefab, height_threeshold=10):
     """
     Check if the tfchain daemon is synced with the offical testnet
     @param prefab: prefab of the TFT node
+    @param height_threeshold: The max difference between the testnet explorer and the local node to be considered in sync
     """
     testnet_explorer = 'https://explorer.testnet.threefoldtoken.com/explorer'
     res = requests.get(testnet_explorer)
@@ -190,10 +211,25 @@ def check_tfchain_synced(prefab):
         match = re.search('^Synced:\s+(?P<synced>\w+)\n*.*\n*Height:\s*(?P<height>\d+)', out)
         if match:
             match_info = match.groupdict()
-            if match_info['synced'] == 'Yes' and int(match_info['height']) == expected_height:
+            if match_info['synced'] == 'Yes' and expected_height - int(match_info['height']) <= height_threeshold:
                 return True
     return False
 
+def check_btc_synced(prefab, height_threeshold=10):
+    """
+    Check if the BTC node is synced with the offical testnet3
+    @param prefab: prefab of the BTC node
+    @param height_threeshold: The max difference between the testnet and the local node to be considered in sync
+    """
+    testnet_url = 'https://api.blockcypher.com/v1/btc/test3'
+    res = requests.get(testnet_url)
+    if res.status_code == 200:
+        expected_height = res.json()['height']
+        _, out, _ = prefab.core.run(cmd='bitcoin-cli -getinfo')
+        current_height = json.loads(out)['blocks']
+        if expected_height - current_height <= height_threeshold:
+            return True
+    return False
 
 
 def start_blockchains(prefab, node_name):
@@ -265,7 +301,15 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
     tft_node_prefab.core.run('echo "export PATH=/opt/bin:$PATH" >> /root/.bash_profile', profile=False)
 
     start_blockchains(tft_node_prefab, tft_node_data['name'])
-
+    print('Initializing TFT wallet')
+    passphrase = os.environ.get('TFT_WALLET_PASSPHRASE', DEFAULT_TFT_WALLET_PASSPHRASE)
+    recovery_seed = os.environ.get('TFT_WALLET_RECOVERY_SEED')
+    tft_wallet_init(prefab=tft_node_prefab,
+                    passphrase=passphrase,
+                    recovery_seed=recovery_seed)
+    print('Unlocking TFT wallet')
+    tft_wallet_unlock(prefab=tft_node_prefab,
+                      passphrase=passphrase)
 
     btc_node_data = {
     'name': 'btc_node',
@@ -302,7 +346,15 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
 
     start_blockchains(btc_node_prefab, btc_node_data['name'])
 
+    print("Wait until TFT node is synced")
+    while True:
+        if check_tfchain_synced(tft_node_prefab):
+            break
 
+    print("Wait until BTC node is synced")
+    while True:
+        if check_btc_synced(btc_node_prefab):
+            break
 
 
 def create_packet_machines(sshkeyname=None):
@@ -397,6 +449,7 @@ def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', p
     except Exception:
         import IPython
         IPython.embed()
+    return zos_node_name
 
 
 def main():
@@ -413,16 +466,15 @@ def main():
     sshkeyname = os.environ.get('SSHKEY_NAME')
     zt_client_instance = os.environ.get('ZT_CLIENT_INSTANCE', 'main')
     packet_client_instance = os.environ.get('PACKET_CLIENT_INSTANCE', 'main')
-    create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname,
-                      zt_client_instance=zt_client_instance,
-                      packet_client_instance=packet_client_instance
-                      )
+    zos_node_name = create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname,
+                                      zt_client_instance=zt_client_instance,
+                                      packet_client_instance=packet_client_instance
+                                      )
 
-    # create btcswap command
-    print("Initiating atomic swap operation")
+    print("ZOS node ip address is: {}".format(zos_node_name))
 
 
 if __name__ == '__main__':
     main()
-    import IPython
-    IPython.embed()
+    # import IPython
+    # IPython.embed()
