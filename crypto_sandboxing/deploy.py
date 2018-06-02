@@ -410,7 +410,7 @@ def install_blockchains(prefab):
 
 
 
-def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', packet_client_instance='main', hostname='hussein.blockchain'):
+def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', packet_client_instance='main', hostname='atomicswap.test'):
     """
     Creates a zos node on packet.net
 
@@ -469,7 +469,7 @@ def main():
     sshkeyname = os.environ.get('SSHKEY_NAME')
     zt_client_instance = os.environ.get('ZT_CLIENT_INSTANCE', 'main')
     packet_client_instance = os.environ.get('PACKET_CLIENT_INSTANCE', 'main')
-    zos_node_hostname = os.environ.get('ZOS_NODE_NAME', 'hussein.blockchain')
+    zos_node_hostname = os.environ.get('ZOS_NODE_NAME', 'atomicswap.test')
     zos_node_name = create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname,
                                       zt_client_instance=zt_client_instance,
                                       packet_client_instance=packet_client_instance,
