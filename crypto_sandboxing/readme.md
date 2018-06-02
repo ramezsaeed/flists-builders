@@ -59,7 +59,7 @@ Out[8]: 'Created new address: 010b5b9c062731dad10f87f67722ea37e578c4808a14f6b251
 ```
 You then need to contact the rivine team to send you funds on this address.
 
-### Adding funds to the BTC node wallet
+#### Adding funds to the BTC node wallet
 First you need to get an address from the BTC wallet, you cn do that by executing the following commands on the js9 noce that ran the deploy script
 ```python
 btc_prefab = j.tools.prefab.getFromSSH(<zt_ip_address_of_zos_node>, port=2350)
@@ -75,4 +75,37 @@ Then you can use the above address to transfer funds to it. You can do that by v
 Once you have funds in both wallets then you can start using the atomicswap tool
 
 
+## Atomicswap process
+Atomicswap is a method that allows two users from two different chains to exchange funds after agreeing of the amount from each cryptocurrency.
+A more detailed description of the atomicswap process can be found here: [https://github.com/decred/atomicswap#theory]
+We support atomicswap between TFT and BTC and we provide a JS9 SAL that make it very easy to to automate the atomicswap process. You can check what parameters are expected to be passed to the SAL by executing the following on the JS9 node:
+```python
+In [5]: j.tools.atomicswap.execute?
+Signature: j.tools.atomicswap.execute(initiator_prefab, initiator_address, initiator_amount, participant_prefab, participant_address, participant_amount, testnet=False)
+Docstring:
+Executes a full cross chains atomicswap operation. This might take a long time depending on the confirmation time that each blockchain
+netowrk will take.
 
+@param initiator_prefab: Prefab object connecting to the atomic swap initiator node
+@param initiator_address: Address from the participant network to recieve funds on
+@param initiator_amount: Amount in the initator currency in the format '0.00024XXX' where XXX is the currency code, must be one of the following
+('BTC', 'TFT', 'ETH', 'XRP')
+@param participant_prefab: Prefab object connecting to  the atomic swap participant node.
+@param participant_address: Address from the initiator network to recieve funds on.
+@param participant_amount: Amount in the participant currency in the format '0.0000XXX' where XXX is the currency code, must be one of the following
+('BTC', 'TFT', 'ETH', 'XRP')
+@param testnet: If True, testnet is going to be used when doing the atomicswap [False by default]
+```
+You can start an atomicswap process by executing the following steps in the JS9 node in js9 shell:
+```python
+initiator_address = '0131a9f2a6f6cee659453b4b03946cfb615136df974908a351dd01088d95c5323829270378f410'
+initiator_amount = '0.01234BTC'
+initiator_prefab = j.tools.prefab.getFromSSH(<zt_ip_address_of_zos_node>, 2350)
+
+participant_address = 'mfXm55Jcfn3rLje6PxL4Mq6tBCyjBMDuVE'
+participant_amount = '50TFT'
+participant_prefab = j.tools.prefab.getFromSSH(<zt_ip_address_of_zos_node>, 2250)
+
+# execute the atomicswap
+j.tools.atomicswap.execute(initiator_prefab, initiator_address, initiator_amount, participant_prefab, participant_address, participant_amount, True)
+```
