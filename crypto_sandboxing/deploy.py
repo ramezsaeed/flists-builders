@@ -350,11 +350,13 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
     while True:
         if check_tfchain_synced(tft_node_prefab):
             break
+        time.sleep(20)
 
     print("Wait until BTC node is synced")
     while True:
         if check_btc_synced(btc_node_prefab):
             break
+        time.sleep(20)
 
 
 def create_packet_machines(sshkeyname=None):
@@ -408,7 +410,7 @@ def install_blockchains(prefab):
 
 
 
-def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', packet_client_instance='main'):
+def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', packet_client_instance='main', hostname='hussein.blockchain'):
     """
     Creates a zos node on packet.net
 
@@ -419,9 +421,10 @@ def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', p
     zt_api_token = j.clients.zerotier.get(zt_client_instance).config.data['token_']
     packet_cl = j.clients.packetnet.get(packet_client_instance)
     sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
-    zos_packet_cl, packet_node, ipaddr  = packet_cl.startZeroOS(hostname='hussein.blockchain', zerotierId=zt_netid,
+    zos_packet_cl, packet_node, ipaddr  = packet_cl.startZeroOS(hostname=hostname, zerotierId=zt_netid,
                                                                 plan='baremetal_1', zerotierAPI=zt_api_token,
-                                                                branch='master', params=['development'])
+                                                                branch='development', params=['development', 'console=ttyS1,115200'])
+                                                                # branch='development', params=['development'])
     zos_node_name = ipaddr
     zrobot_data = {
     'url': 'http://{}:6600'.format(zos_node_name)
@@ -466,9 +469,11 @@ def main():
     sshkeyname = os.environ.get('SSHKEY_NAME')
     zt_client_instance = os.environ.get('ZT_CLIENT_INSTANCE', 'main')
     packet_client_instance = os.environ.get('PACKET_CLIENT_INSTANCE', 'main')
+    zos_node_hostname = os.environ.get('ZOS_NODE_NAME', 'hussein.blockchain')
     zos_node_name = create_packet_zos(zt_netid=zt_netid, sshkeyname=sshkeyname,
                                       zt_client_instance=zt_client_instance,
-                                      packet_client_instance=packet_client_instance
+                                      packet_client_instance=packet_client_instance,
+                                      hostname=zos_node_hostname
                                       )
 
     print("ZOS node ip address is: {}".format(zos_node_name))
