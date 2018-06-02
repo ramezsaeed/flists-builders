@@ -77,7 +77,7 @@ Once you have funds in both wallets then you can start using the atomicswap tool
 
 ## Atomicswap process
 Atomicswap is a method that allows two users from two different chains to exchange funds after agreeing of the amount from each cryptocurrency.
-A more detailed description of the atomicswap process can be found here: [https://github.com/decred/atomicswap#theory]
+A more detailed description and example of the atomicswap process can be found here: [https://github.com/rivine/rivine/blob/master/doc/atomicswap/atomicswap.md#theory]
 We support atomicswap between TFT and BTC and we provide a JS9 SAL that make it very easy to to automate the atomicswap process. You can check what parameters are expected to be passed to the SAL by executing the following on the JS9 node:
 ```python
 In [5]: j.tools.atomicswap.execute?
