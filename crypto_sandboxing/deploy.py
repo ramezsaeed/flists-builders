@@ -322,7 +322,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
                  'name': 'sshauthorizedkeys'}],
     }
     print("Creating BTC node vm")
-    btc_node_srv = zrobot_cl.services.create('github.com/zero-os/0-templates/vm/0.0.1', btc_node_data['name'], btc_node_data)
+    btc_node_srv = zrobot_cl.services.find_or_create('github.com/zero-os/0-templates/vm/0.0.1', btc_node_data['name'], btc_node_data)
     task = btc_node_srv.schedule_action('install')
     task.wait()
     if task.state != 'ok':
