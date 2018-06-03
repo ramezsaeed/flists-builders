@@ -440,7 +440,7 @@ def create_packet_zos(sshkeyname=None, zt_netid="", zt_client_instance='main', p
             zrobot_cl.services.names
         except Exception:
             timeout -= 30
-            time.sleep(timeout)
+            time.sleep(30)
         else:
             break
 
