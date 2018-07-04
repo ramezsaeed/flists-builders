@@ -19,8 +19,8 @@ def upload(prefab):
     prefab.core.execute_bash('''curl -b 'caddyoauth=%s' -F file=@/opt/var/build/sandbox/js9_sandbox.tar.gz https://hub.gig.tech/api/flist/me/upload''' % (iyo_client.jwt))
     # zhub_data = {'token_': iyo_client.jwt, 'username': 'abdelrahman_hussein_1','url': 'https://hub.gig.tech/api'}
     # zhub_client = j.clients.zerohub.get(data=zhub_data)
-    zhub_client = j.clients.zerohub.get()
-    zhub_client.authentificate()
+    zhub_client = j.clients.zhub.get()
+    zhub_client.authenticate()
     sources = ['gig-official-apps/ubuntu1604-for-js.flist',
                 'abdelrahman_hussein_1/capacity_checker_js9.flist', 
                 '{}/js9_sandbox.flist'.format(zhub_client.config.data['username'])]
