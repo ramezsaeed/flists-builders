@@ -1,7 +1,7 @@
 from js9 import j
 import threading
 import re
-from pssh.exceptions import ConnectionErrorException
+from pssh.exceptions import ConnectionErrorException, SessionError
 import requests
 import time
 import os
@@ -142,7 +142,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
     zrobot_cl = j.clients.zrobot.robots[zos_node_name]
     tft_node_name = 'tft_node'
     tft_node_data = {
-    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucrypto.flist',
+    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucryptoexchange.flist',
     'memory': 1024 * 14,
     'cpu': 2,
     'nics':[{'type': 'default', 'name': 'nic01'}],
@@ -176,8 +176,9 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
         try:
             tft_node_prefab = j.tools.prefab.getFromSSH(addr=zos_node_name, port=tft_node_data['ports'][0]['source'])
             break
-        except ConnectionErrorException as ex:
+        except (ConnectionErrorException, SessionError) as ex:
             print("Error while connectin to TFT node: {}".format(ex))
+            j.clients.sshkey.key_load(sshkey.path)
             time.sleep(30)
             timeout -= 30
 
@@ -202,7 +203,7 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
     btc_node_name = 'btc_node'
 
     btc_node_data = {
-    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucrypto.flist',
+    'flist': 'https://hub.gig.tech/abdelrahman_hussein_1/ubuntucryptoexchange.flist',
     'memory': 1024 * 14,
     'cpu': 2,
     'nics':[{'type': 'default', 'name': 'nic01'}],
@@ -234,7 +235,8 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
         try:
             btc_node_prefab = j.tools.prefab.getFromSSH(addr=zos_node_name, port=btc_node_data['ports'][0]['source'])
             break
-        except ConnectionErrorException as ex:
+        except (ConnectionErrorException, SessionError) as ex:
+            j.clients.sshkey.key_load(sshkey.path)
             time.sleep(30)
             timeout -= 30
 
@@ -260,54 +262,54 @@ def create_blockchain_zos_vms(zos_node_name='main', sshkeyname=None):
 
 
 
-def create_packet_machines(sshkeyname=None):
-    """
-    This will create 4 nodes each running all the blockchains
-
-    @param sshkeyname: Name of the sshkey to use to authorize access to the created nodes
-
-    @returns: A dictionary with in the form {"btc": <prefab_obj>, "tft": <prefab_obj>, "eth": <prefab_obj>, "xrp": <prefab_obj>}
-    """
-    packet_cl = j.clients.packetnet.get()
-    sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
-    print("Creating packet machine for Bitcoin node")
-    btc_node = packet_cl.startDevice(hostname='hussein.btc', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
-    install_blockchains(prefab=btc_node.prefab)
-
-    # start bitcoind
-    btc_node.prefab.core.dir_ensure(DEFAULT_BITCOIN_DIR)
-    btc_node.prefab.core.file_write(location=DEFAULT_BITCOIN_CONFIG_PATH,
-                                    content=DEFAULT_BITCOIN_CONFIG)
-
-    start_blockchains(prefab=btc_node.prefab, node_name='hussein.btc')
-
-    print("Creating packet machine for TFTChain node")
-    tft_node = packet_cl.startDevice(hostname='hussein.tft', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
-    install_blockchains(prefab=tft_node.prefab)
-
-    start_blockchains(prefab=tft_node.prefab, node_name='hussein.tft')
-
-    return {
-    'btc': btc_node.prefab,
-    'tft': tft_node.prefab,
-    'eth': None,
-    'xrp': None,
-    }
-
-
-def install_blockchains(prefab):
-    """
-    Install TFT, BTC, ETH and XRP blockchains
-    """
-    print("Installing blockchains")
-    prefab.system.base.install(upgrade=True)
-    prefab.blockchain.tfchain.build()
-    prefab.blockchain.tfchain.install()
-    prefab.blockchain.bitcoin.build()
-    prefab.blockchain.bitcoin.install()
-    prefab.blockchain.atomicswap.build()
-    prefab.blockchain.atomicswap.install()
-    # prefab.blockchain.ethereum.install()
+# def create_packet_machines(sshkeyname=None):
+#     """
+#     This will create 4 nodes each running all the blockchains
+#
+#     @param sshkeyname: Name of the sshkey to use to authorize access to the created nodes
+#
+#     @returns: A dictionary with in the form {"btc": <prefab_obj>, "tft": <prefab_obj>, "eth": <prefab_obj>, "xrp": <prefab_obj>}
+#     """
+#     packet_cl = j.clients.packetnet.get()
+#     sshkeyname = sshkeyname or (j.clients.sshkey.listnames()[0] if j.clients.sshkey.listnames() else DEFAULT_SSHKEY_NAME)
+#     print("Creating packet machine for Bitcoin node")
+#     btc_node = packet_cl.startDevice(hostname='hussein.btc', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
+#     install_blockchains(prefab=btc_node.prefab)
+#
+#     # start bitcoind
+#     btc_node.prefab.core.dir_ensure(DEFAULT_BITCOIN_DIR)
+#     btc_node.prefab.core.file_write(location=DEFAULT_BITCOIN_CONFIG_PATH,
+#                                     content=DEFAULT_BITCOIN_CONFIG)
+#
+#     start_blockchains(prefab=btc_node.prefab, node_name='hussein.btc')
+#
+#     print("Creating packet machine for TFTChain node")
+#     tft_node = packet_cl.startDevice(hostname='hussein.tft', os='ubuntu_16_04', remove=False, sshkey=sshkeyname)
+#     install_blockchains(prefab=tft_node.prefab)
+#
+#     start_blockchains(prefab=tft_node.prefab, node_name='hussein.tft')
+#
+#     return {
+#     'btc': btc_node.prefab,
+#     'tft': tft_node.prefab,
+#     'eth': None,
+#     'xrp': None,
+#     }
+#
+#
+# def install_blockchains(prefab):
+#     """
+#     Install TFT, BTC, ETH and XRP blockchains
+#     """
+#     print("Installing blockchains")
+#     prefab.system.base.install(upgrade=True)
+#     prefab.blockchain.tfchain.build()
+#     prefab.blockchain.tfchain.install()
+#     prefab.blockchain.bitcoin.build()
+#     prefab.blockchain.bitcoin.install()
+#     prefab.blockchain.atomicswap.build()
+#     prefab.blockchain.atomicswap.install()
+#     # prefab.blockchain.ethereum.install()
 
 
 
