@@ -77,7 +77,7 @@ if __name__ == "__main__":
         cryptoflist= merge(zhub_client, cryptosandboxtarget, cryptosources)
         ubuntucryptotarget = "ubuntucrypto.flist"
         # can't use cryptoflist as source here because
-        ubuntucryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist, "https://hub.gig.tech/gig-bootable/ubuntu:lts.flist"]
+        ubuntucryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist, "gig-bootable/ubuntu:lts.flist"]
 
         ubuntucryptoflist = merge(zhub_client, ubuntucryptotarget, ubuntucryptosources)
 
