@@ -20,7 +20,7 @@ def do_pkgsandbox_and_push(prefabpkg, flistname="cryptosandbox", bins=None):
     prefab = prefabpkg.prefab
     DATA_DIR = '/tmp/pkgsandbox'
     prefab.core.dir_remove(DATA_DIR)
-    if prefabpkg.NAME in ('tfchain', 'electrum'):
+    if prefabpkg.NAME == 'tfchain':
         prefabpkg.build(tag=os.environ.get('{}_TAG'.format(prefabpkg.NAME.upper())), reset=True)
         prefabpkg.install(tag=os.environ.get('{}_TAG'.format(prefabpkg.NAME.upper())), reset=True)
     else:
@@ -61,12 +61,11 @@ if __name__ == "__main__":
         tfchainflist = do_pkgsandbox_and_push(prefab.blockchain.tfchain, flistname="tfchainflist", bins=tfchainbins)
         ethereumflist = do_pkgsandbox_and_push(prefab.blockchain.ethereum, flistname="ethereumflist", bins=ethbins)
         atomicswapflist = do_pkgsandbox_and_push(prefab.blockchain.atomicswap, flistname="atomicswapflist", bins=atomicswapbins)
-        electrumflist = do_pkgsandbox_and_push(prefab.blockchain.electrum, flistname="electrumflist", bins=electrumbins)
-        cryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist, electrumflist]
+        cryptosources = [btcflist, tfchainflist, ethereumflist, atomicswapflist]
 
         cryptosandboxtarget = 'cryptosandbox.flist'
 
-        zhub_data = {'token_': iyo_client.jwt, 'username': username,'url': 'https://hub.gig.tech/api'}
+        zhub_data = {'token_': iyo_client.jwt_get(), 'username': username,'url': 'https://hub.gig.tech/api'}
         zhub_client = j.clients.zhub.get(instance="mainbe", data=zhub_data)
         if hasattr(zhub_client, 'authentificate'):
             zhub_client.authentificate()
@@ -84,7 +83,7 @@ if __name__ == "__main__":
         print("https://hub.gig.tech/{}".format(ubuntucryptoflist))
 
         # try to do localhub
-        zhub_dataeg = {'token_': iyo_client.jwt, 'username': username,'url': 'http://192.168.20.132:8080/api'}
+        zhub_dataeg = {'token_': iyo_client.jwt_get(), 'username': username,'url': 'http://192.168.20.132:8080/api'}
         zhub_clienteg = j.clients.zhub.get(instance="maineg", data=zhub_dataeg)
         if hasattr(zhub_client, 'authentificate'):
             zhub_client.authentificate()
