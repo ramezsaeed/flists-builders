@@ -84,13 +84,10 @@ You can check how to use the atomicswap SAL using the documentation here: [https
 
 # Creating a Jumpscale Decentralized Exchange(DEX) flist
 A Jumpscale DEX is a flist that contains all the services needed to run a container/node that can be part of a Decentralized network for exchanging cryptocurrencies.
-The flist [js9_dex](https://hub.gig.tech/abdelrahman_hussein_1/js9_dex.flist
-) is based on an [ubuntu image](https://hub.gig.tech/gig-official-apps/ubuntu1604-for-js.flist
-) and it is merged with:
-- Jumpscale [flist](https://hub.gig.tech/abdelrahman_hussein_1/js9_sandbox.flist
-)
-- Electrum [flista](https://hub.gig.tech/abdelrahman_hussein_1/electrum.flist
-)
+The flist [js9_dex](https://hub.gig.tech/abdelrahman_hussein_1/js9_dex.flist) is based on an [ubuntu image](https://hub.gig.tech/gig-official-apps/ubuntu1604-for-js.flist) and it is merged with:
+- Boot files for ubunto xenial [flist](https://hub.gig.tech/abdelrahman_hussein_1/ubuntu_xenial_boot.flist)
+- Jumpscale [flist](https://hub.gig.tech/abdelrahman_hussein_1/js9_sandbox.flist)
+- Electrum [flista](https://hub.gig.tech/abdelrahman_hussein_1/electrum.flist)
 
 To create the flist, you need to execute the following command:
 ```python

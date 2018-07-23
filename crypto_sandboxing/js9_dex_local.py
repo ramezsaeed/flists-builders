@@ -41,6 +41,7 @@ def main(prefab):
     # merge the electrum flist with a base ubuntu flist and the jumpscale flist
     sources = ['gig-official-apps/ubuntu1604-for-js.flist',
                 'abdelrahman_hussein_1/js9_sandbox.flist',
+                'abdelrahman_hussein_1/ubuntu_xenial_boot.flist',
                 '{}/{}'.format(zhub_client.config.data['username'], ELECTRUM_FLIST_NAME)]
     url = '{}/flist/me/merge/{}'.format(zhub_client.api.base_url, JS9_DEX_FLIST_NAME)
     resp = zhub_client.api.post(uri=url, data=json.dumps(sources), headers=None, params=None, content_type='application/json')
