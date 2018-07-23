@@ -91,3 +91,10 @@ The flist [js9_dex](https://hub.gig.tech/abdelrahman_hussein_1/js9_dex.flist
 )
 - Electrum [flista](https://hub.gig.tech/abdelrahman_hussein_1/electrum.flist
 )
+
+To create the flist, you need to execute the following command:
+```python
+python3 /opt/code/github/jumpscale/sandbox/crypto_sandboxing/cryptosandbox_local.py
+```
+
+If everything goes well, then you will find a copy of the js9_dex.flist and electrum.flist in the account configured via the existing IYO account.
