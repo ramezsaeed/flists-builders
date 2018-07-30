@@ -1,0 +1,3 @@
+kernel: /boot/ipxe-zero-os-generic.lkrn
+initrd: /boot/ipxe-script
+nodefault: true

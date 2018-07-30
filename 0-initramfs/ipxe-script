@@ -1,0 +1,22 @@
+#!ipxe
+echo ================================
+echo == Zero-OS Kernel Boot Loader ==
+echo ================================
+echo 
+
+echo Initializing network
+dhcp || goto failed
+
+echo Synchronizing time
+ntp pool.ntp.org || 
+
+echo 
+show ip
+route
+echo 
+
+echo Downloading Zero-OS image...
+chain https://bootstrap.gig.tech/kernel/zero-os-master.efi development ||
+
+:failed
+sleep 10
